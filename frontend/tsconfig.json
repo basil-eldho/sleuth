@@ -2,7 +2,11 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "bundler",
@@ -14,7 +18,21 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["src"]
+  "include": [
+    "src",
+    "../sample/app.jsx",
+    "../sample/extras.jsx",
+    "../sample/dialogs.jsx",
+    "../sample/detail.jsx",
+    "../sample/data.jsx",
+    "../sample/views.jsx",
+    "../sample/tweaks-panel.jsx",
+    "../sample/shared.jsx",
+    "../sample/image-detail.jsx"
+  ]
 }
