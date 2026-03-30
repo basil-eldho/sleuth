@@ -1,10 +1,150 @@
-*, *::before, *::after {
+@import "tailwindcss";
+
+@theme {
+  /* Backgrounds */
+  --color-bg: #0d0d0b;
+  --color-panel: #0a0a09;
+  --color-card: #0c0c0a;
+  --color-input: #141413;
+  --color-hover: #141413;
+  --color-active: #181817;
+
+  /* Borders */
+  --color-border1: #1a1a19;
+  --color-border2: #1f1f1e;
+  --color-border3: #232321;
+
+  /* Foregrounds */
+  --color-fg: #d0ccc4;
+  --color-fg2: #a8a49c;
+  --color-fg3: #7a7670;
+  --color-fg4: #5a5652;
+  --color-fg5: #4a4a48;
+  --color-fg6: #3a3a38;
+
+  /* Accents */
+  --color-green: #3dd68c;
+  --color-amber: #e8a742;
+  --color-red: #e05252;
+  --color-blue: #7aa8c4;
+  --color-warm: #c4a87a;
+
+  /* Interactive state colors — used by buttons, not exposed as design tokens */
+  --color-green-dim: #162018;
+  /* primary button bg */
+  --color-green-dim-hov: #1c2a20;
+  /* primary button hover bg */
+  --color-green-border: #2a3a30;
+  /* primary button border */
+  --color-danger-border: #3a1a1a;
+  /* danger button hover border */
+  --color-amber-dim: #b87a20;
+  /* disk cache warn text */
+
+  /* Stack graph edge stroke colors */
+  --color-edge-running: #2a4a3a;
+  --color-edge-warning: #4a3a20;
+  --color-edge-exited: #4a2a2a;
+
+  /* Font */
+  --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+
+  /* Text scale — rem-based so html font-size controls everything globally.
+     To make the whole UI larger or smaller, adjust html { font-size } below. */
+  --text-2xs: 0.625rem;
+
+  /* Letter-spacing scale — named tokens for all tracking values used in the UI */
+  --tracking-ui:          0.02em;   /* button labels */
+  --tracking-port:        0.03em;   /* port chip */
+  --tracking-label:       0.04em;   /* sidebar labels, disk rows */
+  --tracking-status:      0.05em;   /* status bar (= Tailwind tracking-wider) */
+  --tracking-brand:       0.08em;   /* SLEUTH wordmark */
+  /* tracking-widest (0.1em) is a Tailwind default — use it directly */
+  --tracking-section:     0.12em;   /* CACHE TIMELINE, all-caps section labels */
+
+  /* Spacing tokens */
+  --spacing-cell: 9px;              /* comfortable density row padding (py-cell) */
+
+  /* Height tokens */
+  --height-bar: 3px;                /* MiniBar track height */
+
+  /* Line-height tokens */
+  --leading-log: 17px;              /* build output log lines */
+  /* 10px @ 16px base — keyboard hints, tiny labels */
+  --text-xs: 0.6875rem;
+  /* 11px — secondary info, counts */
+  --text-sm: 0.75rem;
+  /* 12px — body text, nav items */
+  --text-base: 0.8125rem;
+  /* 13px — primary text, table rows */
+  --text-lg: 0.875rem;
+  /* 14px — section titles */
+}
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-body {
+html {
+  /* Single knob for global font scale — bump this to make everything bigger */
+  font-size: 19px;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
   margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
-  background: #0f1117;
-  color: #e2e8f0;
+  padding: 0;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a09;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1a1a19;
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #232321;
+}
+
+/* Selection */
+::selection {
+  background: rgba(61, 214, 140, 0.2);
+  color: var(--color-fg);
+}
+
+input,
+select,
+button {
+  font-family: inherit;
+}
+
+input::placeholder {
+  color: var(--color-fg5);
+}
+
+button {
+  white-space: nowrap;
 }
