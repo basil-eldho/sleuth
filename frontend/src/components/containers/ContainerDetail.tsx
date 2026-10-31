@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { ArrowLeft, Play, Square, RotateCw, Trash2 } from 'lucide-react';
 import { PostMortem } from './PostMortem';
+import { LiveStatStrip } from './LiveStatStrip';
 import { OverviewTab } from './tabs/OverviewTab';
 import { LogsTab } from './tabs/LogsTab';
 import { StatsTab } from './tabs/StatsTab';
@@ -67,28 +69,26 @@ export function ContainerDetail({ container: c, onClose }: ContainerDetailProps)
   const logLines = useLogs(c.id);
   const actions = useContainerActions(container.id);
 
-  const activeTab = TABS.find((t) => t.id === tab)!;
-
   return (
     <div className="flex-1 flex flex-col bg-bg overflow-hidden">
       {/* Breadcrumb */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border1 bg-card shrink-0">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border1 bg-card shrink-0 font-sans">
         <div className="flex items-center gap-2.5 min-w-0 overflow-hidden whitespace-nowrap">
           <button
             onClick={onClose}
-            className="bg-transparent border-none cursor-pointer text-fg4 text-xs px-0 hover:text-fg2 transition-colors"
+            className="inline-flex items-center gap-1 bg-transparent border-none cursor-pointer text-fg4 text-xs px-0 hover:text-fg2 transition-colors"
           >
-            ← containers
+            <ArrowLeft size={12} /> containers
           </button>
           <span className="text-fg6 text-xs">/</span>
           <span className="flex items-center gap-1.5 whitespace-nowrap">
             <StatusDot status={container.status} />
-            <span className="text-sm text-fg">{container.name}</span>
+            <span className="text-sm text-fg font-medium">{container.name}</span>
             <span className={`text-2xs ${statusTextClass[container.status]} whitespace-nowrap`}>
-              [{STATUS_LABEL[container.status]}]
+              {STATUS_LABEL[container.status]}
             </span>
           </span>
-          <span className="text-xs whitespace-nowrap">
+          <span className="text-xs whitespace-nowrap font-mono">
             <CopyText value={container.hash} colorClass="text-fg5">{container.hash}</CopyText>
           </span>
         </div>
@@ -96,27 +96,27 @@ export function ContainerDetail({ container: c, onClose }: ContainerDetailProps)
         <div className="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
           {container.status === 'exited' ? (
             <DetailBtn primary disabled={actions.busy} onClick={() => actions.start.mutate()}>
-              {actions.start.isPending ? '…' : '▶ start'}
+              {actions.start.isPending ? '…' : <span className="inline-flex items-center gap-1"><Play size={12} /> start</span>}
             </DetailBtn>
           ) : (
             <>
               <DetailBtn disabled={actions.busy} onClick={() => actions.stop.mutate()}>
-                {actions.stop.isPending ? '…' : '■ stop'}
+                {actions.stop.isPending ? '…' : <span className="inline-flex items-center gap-1"><Square size={12} /> stop</span>}
               </DetailBtn>
               <DetailBtn disabled={actions.busy} onClick={() => actions.restart.mutate()}>
-                {actions.restart.isPending ? '…' : '↺ restart'}
+                {actions.restart.isPending ? '…' : <span className="inline-flex items-center gap-1"><RotateCw size={12} /> restart</span>}
               </DetailBtn>
             </>
           )}
           <DetailBtn danger disabled={actions.busy} onClick={() => actions.remove.mutate(undefined, { onSuccess: onClose })}>
-            {actions.remove.isPending ? '…' : '✕ remove'}
+            {actions.remove.isPending ? '…' : <span className="inline-flex items-center gap-1"><Trash2 size={12} /> remove</span>}
           </DetailBtn>
           <span className="ml-2 text-2xs text-fg5 whitespace-nowrap">esc to close</span>
         </div>
       </div>
 
       {/* Tab bar */}
-      <div className="flex items-center border-b border-border1 bg-panel pl-1.5 shrink-0">
+      <div className="flex items-center border-b border-border1 bg-panel pl-1.5 shrink-0 font-sans">
         {TABS.map((t) => {
           const active = tab === t.id;
           return (
@@ -130,16 +130,15 @@ export function ContainerDetail({ container: c, onClose }: ContainerDetailProps)
                   : 'text-fg4 border-b-transparent hover:text-fg3',
               ].join(' ')}
             >
-              <span className={active ? 'text-fg4 text-2xs' : 'text-fg6 text-2xs'}>{t.key}</span>
+              <span className={`font-mono ${active ? 'text-accent text-2xs' : 'text-fg6 text-2xs'}`}>{t.key}</span>
               <span>{t.label}</span>
             </button>
           );
         })}
-        <span className="flex-1" />
-        <span className="text-xs text-fg5 px-3.5 whitespace-nowrap shrink-0">
-          <span className="text-green">$</span> {activeTab.cmd} {container.name}
-        </span>
       </div>
+
+      {/* Live telemetry readout (CPU / MEM / network / block-I/O) */}
+      <LiveStatStrip container={container} />
 
       {/* Post-mortem banner — shown when backend provides exit info */}
       {container.status === 'exited' && container.exitInfo && (

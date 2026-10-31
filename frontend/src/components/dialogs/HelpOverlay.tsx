@@ -16,7 +16,7 @@ interface HelpOverlayProps {
 export function HelpOverlay({ onClose }: HelpOverlayProps) {
   return (
     <Modal onClose={onClose} size="md">
-      <ModalHeader command="man sleuth" />
+      <ModalHeader title="Keyboard shortcuts" onClose={onClose} />
       <div className="px-4 py-4 overflow-auto">
         <div className="text-sm text-fg2 mb-3.5">
           sleuth is keyboard-first. you almost never need the mouse.

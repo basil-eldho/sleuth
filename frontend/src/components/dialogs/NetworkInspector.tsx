@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { AlertTriangle, Play } from 'lucide-react';
 import { Modal, ModalHeader } from '../ui/Modal';
 import { DetailBtn } from '../ui/TopBtn';
 import { Dot } from '../ui/Dot';
 import { useContainers } from '../../hooks/useContainers';
+import { api } from '../../api/client';
+import type { ProbeResult } from '../../types/docker';
 
 const INPUT_CLASS = 'w-full bg-input border border-border3 rounded-sm px-2 py-1 text-fg text-sm outline-none';
 
@@ -20,12 +23,6 @@ function Field({ label, children }: FieldProps) {
   );
 }
 
-interface ProbeResult {
-  ok: boolean;
-  latencyMs: number;
-  lines: string[];
-}
-
 interface NetworkInspectorProps {
   onClose: () => void;
 }
@@ -39,22 +36,19 @@ export function NetworkInspector({ onClose }: NetworkInspectorProps) {
   const [busy, setBusy]   = useState(false);
   const [result, setResult] = useState<ProbeResult | null>(null);
 
-  function probe() {
+  async function probe() {
+    const target = containers.find((c) => c.id === to);
+    if (!from || !target) return;
     setBusy(true);
     setResult(null);
-    const tc = containers.find((c) => c.id === to);
-    setTimeout(() => {
-      const ok  = !!tc && tc.status === 'running' && Math.random() > 0.15;
-      const lat = +(Math.random() * 4 + 0.4).toFixed(1);
-      setResult({
-        ok,
-        latencyMs: lat,
-        lines: ok
-          ? [`connecting to ${tc?.ip ?? '?'}:${port}...`, 'connection succeeded', `round-trip: ${lat} ms`]
-          : [`connecting to ${tc?.ip ?? '?'}:${port}...`, `nc: connect failed: Connection refused`, `hint: check ${to} is listening and on the same network`],
-      });
+    try {
+      const res = await api.containers.probe(from, target.ip, Number(port) || 0);
+      setResult(res);
+    } catch (e) {
+      setResult({ ok: false, latencyMs: 0, lines: ['probe failed: ' + (e as Error).message] });
+    } finally {
       setBusy(false);
-    }, 600);
+    }
   }
 
   const fc = containers.find((c) => c.id === from);
@@ -63,9 +57,9 @@ export function NetworkInspector({ onClose }: NetworkInspectorProps) {
 
   return (
     <Modal onClose={onClose} size="lg">
-      <ModalHeader command="docker exec ... nc -zv" />
+      <ModalHeader title="Network reachability" onClose={onClose} />
       <div className="px-4 py-3.5">
-        <div className="grid gap-2 items-end" style={{ gridTemplateColumns: '1fr 20px 1fr 80px' }}>
+        <div className="grid gap-2 items-end grid-cols-[1fr_20px_1fr_80px]">
           <Field label="from">
             <select value={from} onChange={(e) => setFrom(e.target.value)} className={INPUT_CLASS}>
               {running.map((c) => (
@@ -89,14 +83,18 @@ export function NetworkInspector({ onClose }: NetworkInspectorProps) {
         {fc && tc && (
           <div className="mt-2.5 px-2.5 py-1.5 bg-panel rounded-sm text-xs text-fg3">
             {fc.ip} <span className="text-fg5">→</span> {tc.ip}:{port} ·
-            <span className={`ml-1.5 ${sameNet ? 'text-cache-hit' : 'text-amber'}`}>
-              {sameNet ? `same network (${fc.stack ?? 'default'})` : '⚠ different stacks — may need shared network'}
+            <span className={`ml-1.5 inline-flex items-center gap-1 ${sameNet ? 'text-cache-hit' : 'text-amber'}`}>
+              {sameNet
+                ? `same network (${fc.stack ?? 'default'})`
+                : <><AlertTriangle size={11} /> different stacks — may need shared network</>}
             </span>
           </div>
         )}
 
         <div className="mt-3 flex justify-end">
-          <DetailBtn primary onClick={probe}>{busy ? '· probing...' : '▶ probe'}</DetailBtn>
+          <DetailBtn primary onClick={probe}>
+            {busy ? 'probing…' : <span className="inline-flex items-center gap-1"><Play size={11} /> probe</span>}
+          </DetailBtn>
         </div>
       </div>
 
@@ -105,7 +103,7 @@ export function NetworkInspector({ onClose }: NetworkInspectorProps) {
           <div className="flex items-center gap-2 mb-2">
             <Dot color={result.ok ? 'green' : 'red'} />
             <span className={`text-sm ${result.ok ? 'text-green' : 'text-red'}`}>
-              [{result.ok ? 'reachable' : 'unreachable'}]
+              {result.ok ? 'reachable' : 'unreachable'}
             </span>
             {result.ok && <span className="text-xs text-fg3">{result.latencyMs} ms rtt</span>}
           </div>

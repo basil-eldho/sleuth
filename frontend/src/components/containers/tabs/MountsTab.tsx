@@ -26,8 +26,8 @@ export function MountsTab({ container: c }: MountsTabProps) {
             <CopyText value={m.host}>{m.host}</CopyText>
             <span className="text-fg5">→</span>
             <CopyText value={m.container}>{m.container}</CopyText>
-            <span className={`text-2xs tracking-status ml-auto ${m.mode === 'ro' ? 'text-blue' : 'text-green'}`}>
-              [{m.mode}]
+            <span className={`text-2xs tracking-status ml-auto px-1.5 py-0.5 rounded-sm border ${m.mode === 'ro' ? 'text-blue border-blue/40 bg-blue/10' : 'text-green border-green-border bg-green/10'}`}>
+              {m.mode}
             </span>
           </div>
         ))}

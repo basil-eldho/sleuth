@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { UsedByTab } from './tabs/UsedByTab';
 import { CopyText } from '../ui/CopyText';
 import { useContainers } from '../../hooks/useContainers';
@@ -63,9 +64,9 @@ export function ImageDetail({ image, onClose }: ImageDetailProps) {
         <div className="flex items-center gap-2.5 min-w-0 overflow-hidden whitespace-nowrap">
           <button
             onClick={onClose}
-            className="bg-transparent border-none cursor-pointer text-fg4 text-xs px-0 hover:text-fg2 transition-colors"
+            className="inline-flex items-center gap-1 bg-transparent border-none cursor-pointer text-fg4 text-xs px-0 hover:text-fg2 transition-colors"
           >
-            ← images
+            <ArrowLeft size={12} /> images
           </button>
           <span className="text-fg6 text-xs">/</span>
           <span className="text-sm text-fg">{image.repo}</span>
@@ -79,11 +80,6 @@ export function ImageDetail({ image, onClose }: ImageDetailProps) {
         <div className="flex items-center gap-1.5 shrink-0">
           <span className="text-2xs text-fg5">esc to close</span>
         </div>
-      </div>
-
-      {/* Command echo */}
-      <div className="flex items-center px-4 py-1.5 border-b border-border1 bg-panel text-xs text-fg5 shrink-0">
-        <span className="text-green">$</span>&nbsp;docker image inspect {image.repo}:{image.tag}
       </div>
 
       {/* Body */}

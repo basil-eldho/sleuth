@@ -2,6 +2,7 @@ package api
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -95,6 +96,24 @@ func (h *handlers) execInContainer(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"stdout": stdout, "stderr": stderr})
 }
 
+func (h *handlers) probeReach(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var body struct {
+		IP   string `json:"ip"`
+		Port int    `json:"port"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	res, err := h.docker.ProbeReach(r.Context(), id, body.IP, body.Port)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, res)
+}
+
 func (h *handlers) removeContainer(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	if err := h.docker.RemoveContainer(r.Context(), id); err != nil {
@@ -183,9 +202,19 @@ func (h *handlers) streamLogs(w http.ResponseWriter, r *http.Request) {
 	}
 	defer logs.Close()
 
-	scanner := bufio.NewScanner(logs)
-	for scanner.Scan() {
-		if err := conn.WriteMessage(websocket.TextMessage, scanner.Bytes()); err != nil {
+	// A bufio.Reader grows its buffer to fit each line, so a structured JSON log
+	// line larger than bufio.Scanner's 64KB token cap no longer silently kills
+	// the stream the way scanner.Scan() returning ErrTooLong would.
+	reader := bufio.NewReader(logs)
+	for {
+		line, err := reader.ReadBytes('\n')
+		if len(line) > 0 {
+			line = bytes.TrimRight(line, "\r\n")
+			if werr := conn.WriteMessage(websocket.TextMessage, line); werr != nil {
+				return
+			}
+		}
+		if err != nil {
 			return
 		}
 	}

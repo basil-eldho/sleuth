@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Search, Box, Layers, Network, Share2, Database, Trash2, type LucideIcon } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { useAppStore, type NavSection } from '../../store';
 import { useContainers } from '../../hooks/useContainers';
@@ -23,8 +24,8 @@ interface PaletteItem {
   group: string;
   label: string;
   hint?: string;
-  glyph: string;
-  glyphClass: string;
+  Icon: LucideIcon;
+  iconClass: string;
   action: PaletteAction;
 }
 
@@ -46,26 +47,26 @@ export function CommandPalette({ onClose }: CommandPaletteProps) {
   const { data: stacks = [] }     = useStacks();
 
   const items = useMemo<PaletteItem[]>(() => [
-    { id: 'nav-stacks',      group: 'navigate', label: 'go to stacks',           hint: 'S',   glyph: '▸', glyphClass: 'text-fg4',    action: { type: 'nav', nav: 'stacks' } },
-    { id: 'nav-containers',  group: 'navigate', label: 'go to containers',       hint: 'C',   glyph: '▸', glyphClass: 'text-fg4',    action: { type: 'nav', nav: 'containers' } },
-    { id: 'nav-images',      group: 'navigate', label: 'go to images',           hint: 'I',   glyph: '▸', glyphClass: 'text-fg4',    action: { type: 'nav', nav: 'images' } },
-    { id: 'nav-networks',    group: 'navigate', label: 'go to networks',         hint: 'N',   glyph: '▸', glyphClass: 'text-fg4',    action: { type: 'nav', nav: 'networks' } },
-    { id: 'nav-volumes',     group: 'navigate', label: 'go to volumes',          hint: 'V',   glyph: '▸', glyphClass: 'text-fg4',    action: { type: 'nav', nav: 'volumes' } },
-    { id: 'act-probe',       group: 'action',   label: 'probe network reach',                 glyph: '⇄', glyphClass: 'text-blue',   action: { type: 'probe' } },
-    { id: 'act-prune',       group: 'action',   label: 'prune / reclaim space',               glyph: '✕', glyphClass: 'text-amber',  action: { type: 'prune' } },
+    { id: 'nav-stacks',      group: 'navigate', label: 'go to stacks',           hint: 'S',   Icon: Network,  iconClass: 'text-fg4', action: { type: 'nav', nav: 'stacks' } },
+    { id: 'nav-containers',  group: 'navigate', label: 'go to containers',       hint: 'C',   Icon: Box,      iconClass: 'text-fg4', action: { type: 'nav', nav: 'containers' } },
+    { id: 'nav-images',      group: 'navigate', label: 'go to images',           hint: 'I',   Icon: Layers,   iconClass: 'text-fg4', action: { type: 'nav', nav: 'images' } },
+    { id: 'nav-networks',    group: 'navigate', label: 'go to networks',         hint: 'N',   Icon: Share2,   iconClass: 'text-fg4', action: { type: 'nav', nav: 'networks' } },
+    { id: 'nav-volumes',     group: 'navigate', label: 'go to volumes',          hint: 'V',   Icon: Database, iconClass: 'text-fg4', action: { type: 'nav', nav: 'volumes' } },
+    { id: 'act-probe',       group: 'action',   label: 'probe network reach',                 Icon: Share2,   iconClass: 'text-blue',  action: { type: 'probe' } },
+    { id: 'act-prune',       group: 'action',   label: 'prune / reclaim space',               Icon: Trash2,   iconClass: 'text-amber', action: { type: 'prune' } },
     ...containers.map((c) => ({
       id: 'c-' + c.id, group: 'container', label: c.name, hint: c.image,
-      glyph: '●', glyphClass: STATUS_COLOR_CLASS[c.status],
+      Icon: Box, iconClass: STATUS_COLOR_CLASS[c.status],
       action: { type: 'open-container', id: c.id },
     })),
     ...images.map((img) => ({
       id: 'i-' + img.id, group: 'image', label: `${img.repo}:${img.tag}`, hint: img.size,
-      glyph: '◆', glyphClass: img.inUse ? 'text-green' : 'text-fg4',
+      Icon: Layers, iconClass: img.inUse ? 'text-green' : 'text-fg4',
       action: { type: 'nav', nav: 'images' as NavSection },
     })),
     ...stacks.map((s) => ({
       id: 's-' + s.id, group: 'stack', label: s.name, hint: `${s.services.length} services`,
-      glyph: '▤', glyphClass: 'text-fg3',
+      Icon: Network, iconClass: 'text-fg3',
       action: { type: 'nav', nav: 'stacks' as NavSection },
     })),
   ], [containers, images, stacks]);
@@ -115,7 +116,7 @@ export function CommandPalette({ onClose }: CommandPaletteProps) {
   return (
     <Modal onClose={onClose} size="lg" align="top">
       <div className="flex items-center gap-2 px-3.5 py-2.5 border-b border-border1 bg-panel shrink-0">
-        <span className="text-green text-lg">:</span>
+        <Search size={16} className="text-fg5 shrink-0" />
         <input
           autoFocus
           value={q}
@@ -148,7 +149,7 @@ export function CommandPalette({ onClose }: CommandPaletteProps) {
                     active ? 'bg-active border-l-green' : 'bg-transparent border-l-transparent',
                   ].join(' ')}
                 >
-                  <span className={`${it.glyphClass} text-xs w-3 text-center shrink-0`}>{it.glyph}</span>
+                  <it.Icon size={14} className={`${it.iconClass} shrink-0`} />
                   <span className={`text-base flex-1 overflow-hidden text-ellipsis ${active ? 'text-fg' : 'text-fg2'}`}>
                     {it.label}
                   </span>

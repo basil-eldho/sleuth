@@ -1,3 +1,4 @@
+import { Square, RotateCw, Play, Trash2 } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { useContainers } from '../../hooks/useContainers';
 import { useBatchContainerActions } from '../../hooks/useContainerActions';
@@ -8,7 +9,7 @@ function BatchBtn({
   dangerHover = false,
   onClick,
 }: {
-  label: string;
+  label: React.ReactNode;
   colorClass: string;
   dangerHover?: boolean;
   onClick?: () => void;
@@ -17,7 +18,7 @@ function BatchBtn({
     <button
       onClick={onClick}
       className={[
-        'border border-border3 rounded-sm px-2.5 py-1 text-xs cursor-pointer font-mono',
+        'inline-flex items-center gap-1.5 border border-border3 rounded-sm px-2.5 py-1 text-xs cursor-pointer font-mono',
         'bg-transparent text-fg3 transition-colors whitespace-nowrap',
         dangerHover
           ? 'hover:border-danger-border hover:text-red hover:bg-red/5'
@@ -62,13 +63,13 @@ export function BatchActionBar() {
       {runningIds.length > 0 && (
         <>
           <BatchBtn
-            label={`■ stop ${runningIds.length}`}
+            label={<><Square size={12} /> stop {runningIds.length}</>}
             colorClass="text-red"
             dangerHover
             onClick={() => run(() => batch.stopAll.mutate(runningIds))}
           />
           <BatchBtn
-            label={`↺ restart ${runningIds.length}`}
+            label={<><RotateCw size={12} /> restart {runningIds.length}</>}
             colorClass="text-fg3"
             onClick={() => run(() => batch.restartAll.mutate(runningIds))}
           />
@@ -76,13 +77,13 @@ export function BatchActionBar() {
       )}
       {stoppedIds.length > 0 && (
         <BatchBtn
-          label={`▶ start ${stoppedIds.length}`}
+          label={<><Play size={12} /> start {stoppedIds.length}</>}
           colorClass="text-green"
           onClick={() => run(() => batch.startAll.mutate(stoppedIds))}
         />
       )}
       <BatchBtn
-        label={`✕ remove ${count}`}
+        label={<><Trash2 size={12} /> remove {count}</>}
         colorClass="text-red"
         dangerHover
         onClick={() => run(() => batch.removeAll.mutate(allIds))}

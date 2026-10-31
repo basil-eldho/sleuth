@@ -1,8 +1,16 @@
 import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { Dot, StatusDot } from '../ui/Dot';
 import { CopyText } from '../ui/CopyText';
-import type { Stack, Container } from '../../types/docker';
+import type { Stack, Container, ContainerStatus } from '../../types/docker';
+
+const statusTextClass: Record<ContainerStatus, string> = {
+  running: 'text-green', warning: 'text-amber', exited: 'text-red',
+};
+const statusWord: Record<ContainerStatus, string> = {
+  running: 'running', warning: 'unhealthy', exited: 'exited',
+};
 
 interface StackBtnProps {
   label: string;
@@ -67,7 +75,7 @@ export function StacksView({ stacks, containers }: StacksViewProps) {
               className={`flex items-center justify-between px-4 py-3 cursor-pointer gap-3 ${isOpen ? 'bg-card' : 'hover:bg-hover'} transition-colors`}
             >
               <div className="flex items-center gap-2.5 min-w-0 overflow-hidden whitespace-nowrap">
-                <span className="text-2xs text-fg5 w-2.5">{isOpen ? '▼' : '▶'}</span>
+                <ChevronDown size={13} aria-hidden="true" className={`text-fg5 transition-transform duration-100 ${isOpen ? '' : '-rotate-90'}`} />
                 <Dot color={dotColor} />
                 <span className="text-base text-fg">{stack.name}</span>
                 <span className="text-xs text-fg4">{runningCount}/{members.length} running</span>
@@ -83,24 +91,22 @@ export function StacksView({ stacks, containers }: StacksViewProps) {
               </div>
             </div>
 
-            {/* Member containers */}
+            {/* Member containers — bus-line motif (not ASCII tree) */}
             {isOpen && (
-              <div className="pb-2.5">
-                {members.map((c, i) => (
+              <div className="relative pb-2.5">
+                <div className="absolute left-[27px] top-0 bottom-3 w-px bg-border1" aria-hidden="true" />
+                {members.map((c) => (
                   <div
                     key={c.id}
                     onClick={() => { selectContainer(c.id); setActiveNav('containers'); }}
-                    className="flex items-center gap-2.5 px-4 pl-11 py-[5px] cursor-pointer text-sm hover:bg-hover transition-colors"
+                    className="relative flex items-center gap-2.5 pl-11 pr-4 py-1.5 cursor-pointer text-sm hover:bg-hover transition-colors"
                   >
-                    <span className="text-fg6 text-2xs w-5 font-mono">
-                      {i === members.length - 1 ? '└─' : '├─'}
-                    </span>
+                    <span className="absolute left-[27px] top-1/2 w-2.5 h-px bg-border2" aria-hidden="true" />
                     <StatusDot status={c.status} />
-                    <span className="text-fg w-[180px] truncate">{c.name}</span>
+                    <span className="text-fg w-[180px] truncate font-sans font-medium">{c.name}</span>
                     <span className="text-fg4 flex-1 truncate">{c.image}</span>
-                    <span className="text-fg4 text-xs tabular-nums shrink-0">
-                      {c.uptime ?? 'exited'}
-                    </span>
+                    <span className={`text-xs shrink-0 ${statusTextClass[c.status]}`}>{statusWord[c.status]}</span>
+                    <span className="text-fg4 text-xs tabular-nums shrink-0 w-[60px] text-right">{c.uptime ?? '—'}</span>
                   </div>
                 ))}
               </div>

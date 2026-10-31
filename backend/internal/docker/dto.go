@@ -24,6 +24,23 @@ type ContainerDTO struct {
 	Stack    *string           `json:"stack"`
 	Mounts   []BindMountDTO    `json:"mounts,omitempty"`
 	ExitInfo *ExitInfoDTO      `json:"exitInfo,omitempty"`
+
+	// Runtime config — populated by inspect (zero on the list endpoint).
+	RestartPolicy string  `json:"restartPolicy"`
+	Network       string  `json:"network"`
+	Dns           string  `json:"dns"`
+	CpuCap        float64 `json:"cpuCap"`    // cores; 0 = unlimited
+	PidsLimit     int64   `json:"pidsLimit"` // 0 = unlimited
+	OomKill       bool    `json:"oomKill"`
+	Health        string  `json:"health"`
+}
+
+// ProbeResultDTO is the result of a real container-to-target TCP reachability
+// check (exec'd from the source container — never simulated).
+type ProbeResultDTO struct {
+	OK        bool     `json:"ok"`
+	LatencyMs int      `json:"latencyMs"`
+	Lines     []string `json:"lines"`
 }
 
 // ImageDTO is the frontend-compatible image shape.
@@ -115,12 +132,18 @@ type ExitInfoDTO struct {
 	Tail     []string `json:"tail"`
 }
 
-// LiveStats is pushed over WS /ws/stats every 2 s.
+// LiveStats is pushed over WS /ws/stats every 2 s. Net/block-I/O counters are
+// cumulative totals (bytes) since the container started, summed across every
+// interface / block device — the frontend formats them for display.
 type LiveStats struct {
-	ID     string  `json:"id"`
-	CPU    float64 `json:"cpu"`
-	Mem    float64 `json:"mem"`
-	Status string  `json:"status"`
+	ID       string  `json:"id"`
+	CPU      float64 `json:"cpu"`
+	Mem      float64 `json:"mem"`
+	Status   string  `json:"status"`
+	NetRx    int64   `json:"netRx"`    // bytes received
+	NetTx    int64   `json:"netTx"`    // bytes transmitted
+	BlkRead  int64   `json:"blkRead"`  // bytes read from block devices
+	BlkWrite int64   `json:"blkWrite"` // bytes written to block devices
 }
 
 // ---- helpers ----------------------------------------------------------------

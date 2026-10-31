@@ -34,6 +34,7 @@ func NewRouter(dockerClient *docker.Client, collector *stats.Collector, hub *ws.
 	r.Post("/api/containers/{id}/restart", h.restartContainer)
 	r.Delete("/api/containers/{id}", h.removeContainer)
 	r.Post("/api/containers/{id}/exec", h.execInContainer)
+	r.Post("/api/containers/{id}/probe", h.probeReach)
 
 	// other entities
 	r.Get("/api/images", h.listImages)

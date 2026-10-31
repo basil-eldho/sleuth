@@ -1,42 +1,62 @@
 @import "tailwindcss";
 
 @theme {
-  /* Backgrounds */
-  --color-bg: #0d0d0b;
-  --color-panel: #0a0a09;
-  --color-card: #0c0c0a;
-  --color-input: #141413;
-  --color-hover: #141413;
-  --color-active: #181817;
+  /* Surfaces — a warm near-black tonal ladder. Each step is a perceptible
+     elevation (measured in CIE L*, not raw hex): the chrome (panel) sits
+     recessed below the canvas (bg); cards and inputs rise above it; hover/active
+     lift rows clearly off the canvas. Lifting bg off pure black gives the UI
+     depth and lets borders and surfaces actually separate. */
+  --color-bg: #151512;     /* canvas — main content area        L* 6.7  */
+  --color-panel: #0c0c0b;  /* chrome — header, sidebar (recessed) L* 3.3 */
+  --color-card: #1f1e1b;   /* elevated panels, detail cards      L* 11.3 */
+  --color-input: #232320;  /* form fields                        L* 13.6 */
+  --color-hover: #26251f;  /* row / item hover  (ΔL* ~8 over bg) L* 14.6 */
+  --color-active: #2e2d27; /* pressed / selected                 L* 18.4 */
 
-  /* Borders */
-  --color-border1: #1a1a19;
-  --color-border2: #1f1f1e;
-  --color-border3: #232321;
+  /* Borders — tuned to actually draw a line on the canvas (>=1.2:1), where the
+     old values sat at ~1.1:1 and were effectively invisible. */
+  --color-border1: #262622; /* subtle divider           1.21:1 */
+  --color-border2: #302f2a; /* default border           1.36:1 */
+  --color-border3: #3c3b34; /* prominent / focus border 1.63:1 */
 
-  /* Foregrounds */
-  --color-fg: #d0ccc4;
-  --color-fg2: #a8a49c;
-  --color-fg3: #7a7670;
-  --color-fg4: #5a5652;
-  --color-fg5: #4a4a48;
-  --color-fg6: #3a3a38;
+  /* Foregrounds — six-step warm-neutral ramp, measured against --color-bg.
+     fg/fg2 primary & secondary text; fg3 comfortably clears AA; fg4 is readable
+     tertiary (labels, metadata) and now also clears AA; fg5/fg6 are the
+     intentionally quiet end (placeholders, line numbers, disabled) but kept
+     above the perceptibility floor. */
+  --color-fg: #dcd8d2;  /* 12.9:1 */
+  --color-fg2: #b5b1ab; /*  8.6:1 */
+  --color-fg3: #93908b; /*  5.8:1 */
+  --color-fg4: #878479; /*  4.9:1 — clears AA */
+  --color-fg5: #666460; /*  3.1:1 */
+  --color-fg6: #575552; /*  2.5:1 */
 
-  /* Accents */
+  /* Primary accent — the one interactive, non-semantic hue (primary buttons,
+     active nav, focus). A cool indigo set against the warm canvas, deliberately
+     distinct from the semantic colors below so green can mean only "healthy". */
+  --color-accent: #8c9cf2;        /* 7.1:1 — primary text/icon */
+  --color-accent-dim: #1e2234;    /* primary button bg */
+  --color-accent-dim-hov: #262b42;/* primary button hover bg */
+  --color-accent-border: #3b4060; /* primary button / active border */
+
+  /* Accents — semantic status only: green=healthy/running, amber=warn,
+     red=error/stopped, blue=info, warm=highlight. */
   --color-green: #3dd68c;
   --color-amber: #e8a742;
   --color-red: #e05252;
   --color-blue: #7aa8c4;
   --color-warm: #c4a87a;
 
-  /* Interactive state colors — used by buttons, not exposed as design tokens */
-  --color-green-dim: #162018;
+  /* Interactive state colors — used by buttons, not exposed as design tokens.
+     Re-tinted to keep presence on the lifted canvas (the old values were set
+     for pure black and now read as flat). */
+  --color-green-dim: #1a271d;
   /* primary button bg */
-  --color-green-dim-hov: #1c2a20;
+  --color-green-dim-hov: #213026;
   /* primary button hover bg */
-  --color-green-border: #2a3a30;
+  --color-green-border: #354a3d;
   /* primary button border */
-  --color-danger-border: #3a1a1a;
+  --color-danger-border: #4a2222;
   /* danger button hover border */
   --color-amber-dim: #b87a20;
   /* disk cache warn text */
@@ -46,12 +66,39 @@
   --color-edge-warning: #4a3a20;
   --color-edge-exited: #4a2a2a;
 
-  /* Font */
+  /* Fonts — sans is the UI voice (chrome: nav, headers, labels, buttons);
+     mono is reserved for data (logs, hashes, image refs, ports, env, inspect).
+     Archivo is an industrial grotesque chosen for mechanical rigor — it reads
+     like a flight-deck readout and is deliberately *not* the dev-tool default
+     (Inter/Roboto/Open Sans). It shares a geometric DNA with JetBrains Mono, so
+     the two faces read as one engineered system. The body default (below) is
+     mono on purpose — in a Docker cockpit the data is the hero, so the shell
+     opts into sans rather than the other way round. */
+  --font-sans: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
 
-  /* Text scale — rem-based so html font-size controls everything globally.
-     To make the whole UI larger or smaller, adjust html { font-size } below. */
-  --text-2xs: 0.625rem;
+  /* ─── Type scale ──────────────────────────────────────────────────────────
+     rem-based so the html font-size below is the single knob for global scale.
+     px shown are the rendered size at the current 19px root. Hierarchy is
+     carried by SIZE *and* weight *and* color together, never size alone:
+       data    400 (normal)   — the hero: logs, table rows, hashes, numbers
+       ui      500 (medium)   — nav items, labels, buttons, inputs
+       title   600 (semibold) — section + view titles
+     The four small tiers stay tight for density; the two title tiers break
+     away deliberately so a heading never reads as merely-bigger body text. */
+  --text-2xs:  0.625rem;   /* 11.9px — eyebrow labels, kbd hints, line numbers */
+  --text-xs:   0.6875rem;  /* 13.1px — secondary / meta, counts, chips        */
+  --text-sm:   0.75rem;    /* 14.3px — DATA body: table rows, log lines       */
+  --text-base: 0.8125rem;  /* 15.4px — primary UI text, nav items, inputs     */
+  --text-lg:   0.95rem;    /* 18.1px — panel / section titles                 */
+  --text-xl:   1.15rem;    /* 21.9px — view titles, wordmark                  */
+
+  /* Radius — crisp and small; a precision instrument, not a rounded SaaS card.
+     sm = chips / buttons / inputs (the workhorse), md = cards / panels /
+     modals, lg = rare large surfaces. rounded-full stays for status dots. */
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 8px;
 
   /* Letter-spacing scale — named tokens for all tracking values used in the UI */
   --tracking-ui:          0.02em;   /* button labels */
@@ -69,16 +116,7 @@
   --height-bar: 3px;                /* MiniBar track height */
 
   /* Line-height tokens */
-  --leading-log: 17px;              /* build output log lines */
-  /* 10px @ 16px base — keyboard hints, tiny labels */
-  --text-xs: 0.6875rem;
-  /* 11px — secondary info, counts */
-  --text-sm: 0.75rem;
-  /* 12px — body text, nav items */
-  --text-base: 0.8125rem;
-  /* 13px — primary text, table rows */
-  --text-lg: 0.875rem;
-  /* 14px — section titles */
+  --leading-log: 17px;              /* log / build output lines */
 }
 
 *,
@@ -117,22 +155,32 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0a09;
+  background: var(--color-panel);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1a1a19;
+  background: var(--color-border3);
   border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #232321;
+  background: var(--color-fg6);
 }
 
-/* Selection */
+/* Selection — the primary accent, never a semantic status color. Green must
+   mean only "healthy", so it can't double as the text-selection highlight. */
 ::selection {
-  background: rgba(61, 214, 140, 0.2);
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
   color: var(--color-fg);
+}
+
+/* Focus — one visible, consistent ring for every keyboard-focusable control.
+   Non-negotiable per the accessibility bar; components inherit this unless they
+   deliberately override it. Uses the primary accent at 2px so it reads clearly
+   against the warm canvas without being shown on mouse/touch interaction. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 input,

@@ -25,22 +25,29 @@ interface InspectTabProps {
 }
 
 export function InspectTab({ container: c }: InspectTabProps) {
+  // A real-data subset of `docker inspect` assembled from the inspect DTO —
+  // every field below comes from the backend, nothing is fabricated.
   const json = {
-    Id: c.hash,
+    Id: c.id,
     Name: '/' + c.name,
+    Created: c.created,
     State: {
       Status: c.status,
-      Running: c.status === 'running' || c.status === 'warning',
+      Running: c.status !== 'exited',
+      Health: c.health || undefined,
       ExitCode: c.status === 'exited' ? (c.exitInfo?.code ?? 0) : 0,
-      StartedAt: '2025-04-30T10:14:22.001Z',
+      Uptime: c.uptime ?? undefined,
     },
     Image: c.image,
-    NetworkSettings: { IPAddress: c.ip, Ports: c.ports },
+    NetworkSettings: { IPAddress: c.ip, Network: c.network || undefined, Ports: c.ports },
     Config: { Env: Object.entries(c.env).map(([k, v]) => `${k}=${v}`) },
     HostConfig: {
-      Memory: c.memLimit * 1024 * 1024,
-      NanoCpus: 1500000000,
-      RestartPolicy: { Name: 'unless-stopped' },
+      Memory: c.memLimit > 0 ? Math.round(c.memLimit * 1024 * 1024) : 0,
+      NanoCpus: c.cpuCap ? Math.round(c.cpuCap * 1e9) : 0,
+      PidsLimit: c.pidsLimit ?? 0,
+      OomKillDisable: c.oomKill === false,
+      RestartPolicy: { Name: c.restartPolicy || '' },
+      Dns: c.dns && c.dns !== '—' ? c.dns.split(', ') : [],
     },
   };
 
