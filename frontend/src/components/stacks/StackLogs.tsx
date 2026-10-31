@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { useContainers } from '../../hooks/useContainers';
 import { useLogs } from '../../hooks/useLogs';
 import type { Stack, Container } from '../../types/docker';
@@ -122,18 +123,16 @@ export function StackLogs({ stack, onClose }: StackLogsProps) {
         <div className="flex items-center gap-2.5 whitespace-nowrap">
           <button
             onClick={onClose}
-            className="bg-transparent border-none cursor-pointer text-fg4 text-xs px-0 hover:text-fg2 transition-colors"
+            className="inline-flex items-center gap-1 bg-transparent border-none cursor-pointer text-fg4 text-xs px-0 hover:text-fg2 transition-colors"
           >
-            ← stacks
+            <ArrowLeft size={12} /> stacks
           </button>
           <span className="text-fg6 text-xs">/</span>
           <span className="text-sm text-fg">{stack.name}</span>
           <span className="text-xs text-fg4">compose logs · {members.length} services</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-fg5">
-            <span className="text-green">$</span> docker compose -f {stack.file} logs -f --tail 100
-          </span>
+          <span className="text-xs text-fg5 font-mono truncate max-w-[280px]">{stack.file}</span>
           <span className="text-2xs text-fg5 ml-2">esc to close</span>
         </div>
       </div>
@@ -141,6 +140,8 @@ export function StackLogs({ stack, onClose }: StackLogsProps) {
       {/* Toolbar */}
       <div className="flex items-center gap-2.5 px-4 py-2 border-b border-border1 bg-panel shrink-0 flex-wrap">
         <input
+          name="stack-log-filter"
+          aria-label="Filter stack logs"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           placeholder="grep..."
@@ -173,11 +174,13 @@ export function StackLogs({ stack, onClose }: StackLogsProps) {
         <button
           onClick={() => setFollow((f) => !f)}
           className={[
-            'bg-transparent rounded-sm px-2 py-0.5 text-2xs cursor-pointer tracking-widest',
+            'inline-flex items-center gap-1.5 bg-transparent rounded-sm px-2 py-0.5 text-2xs cursor-pointer tracking-widest',
             follow ? 'border border-green-border text-green' : 'border border-border3 text-fg4',
           ].join(' ')}
         >
-          {follow ? '● follow' : '○ paused'}
+          {follow
+            ? <><span className="w-1.5 h-1.5 rounded-full bg-green inline-block" /> follow</>
+            : <><span className="w-1.5 h-1.5 rounded-full border border-fg5 inline-block" /> paused</>}
         </button>
       </div>
 

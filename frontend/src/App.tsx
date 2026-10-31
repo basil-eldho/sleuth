@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { Share2, Trash2, HelpCircle } from 'lucide-react';
 import { useContainers } from './hooks/useContainers';
 import { useImages } from './hooks/useImages';
 import { useNetworks } from './hooks/useNetworks';
@@ -7,6 +8,7 @@ import { useStacks } from './hooks/useStacks';
 import { useAppStore, type NavSection } from './store';
 import { Sidebar } from './components/layout/Sidebar';
 import { ViewHeader } from './components/layout/ViewHeader';
+import { HintBar } from './components/layout/HintBar';
 import { TopBtn } from './components/ui/TopBtn';
 import { StatusDot } from './components/ui/Dot';
 import { ContainerTable } from './components/containers/ContainerTable';
@@ -94,6 +96,10 @@ export function App() {
   const running = allContainers.filter((c) => c.status === 'running').length;
   const warning = allContainers.filter((c) => c.status === 'warning').length;
   const exited  = allContainers.filter((c) => c.status === 'exited').length;
+  const stackCount = useMemo(
+    () => new Set(allContainers.map((c) => c.stack ?? 'standalone')).size,
+    [allContainers],
+  );
 
   const statsValues = useMemo(() => Object.values(liveStats), [liveStats]);
   const totalCpu    = useMemo(() => statsValues.reduce((s, v) => s + v.cpu, 0), [statsValues]);
@@ -136,7 +142,7 @@ export function App() {
   return (
     <div className="flex flex-col w-full h-screen overflow-hidden bg-bg font-mono text-fg">
       {/* Top bar */}
-      <header className="flex items-center justify-between px-4 h-9 shrink-0 border-b border-border1 bg-panel">
+      <header className="flex items-center justify-between px-4 h-9 shrink-0 border-b border-border1 bg-panel font-sans">
         <div className="flex items-center gap-4">
           <StatusChip count={running} label="running" status="running" />
           {warning > 0 && <StatusChip count={warning} label="warning" status="warning" />}
@@ -151,11 +157,17 @@ export function App() {
           <TopBtn onClick={() => openDialog('palette')}>⌘K</TopBtn>
           {!tweaks.headerCollapsed && (
             <>
-              <TopBtn onClick={() => openDialog('inspector')}>⇄ probe</TopBtn>
-              <TopBtn onClick={() => openDialog('prune')}>⌫ reclaim</TopBtn>
+              <TopBtn onClick={() => openDialog('inspector')}>
+                <span className="inline-flex items-center gap-1"><Share2 size={12} /> probe</span>
+              </TopBtn>
+              <TopBtn onClick={() => openDialog('prune')}>
+                <span className="inline-flex items-center gap-1"><Trash2 size={12} /> reclaim</span>
+              </TopBtn>
             </>
           )}
-          <TopBtn onClick={() => openDialog('help')}>?</TopBtn>
+          <TopBtn onClick={() => openDialog('help')}>
+            <span className="flex"><HelpCircle size={13} /></span>
+          </TopBtn>
         </div>
       </header>
 
@@ -167,13 +179,13 @@ export function App() {
           {/* CONTAINERS — table view */}
           {activeNav === 'containers' && !selectedContainer && (
             <>
-              {tweaks.showCmdEcho && (
-                <ViewHeader
-                  command={`docker ps${q ? ` | grep ${q}` : ''}`}
-                  count={containers.length}
-                  total={allContainers.length}
-                />
-              )}
+              <ViewHeader
+                title="Containers"
+                count={containers.length}
+                total={allContainers.length}
+                subtitle={`${containers.length} across ${stackCount} ${stackCount === 1 ? 'stack' : 'stacks'}`}
+                extra={<TopBtn onClick={() => openDialog('prune')}>prune</TopBtn>}
+              />
               <ContainerTable containers={containers} />
               <BatchActionBar />
             </>
@@ -187,11 +199,9 @@ export function App() {
           {/* IMAGES — list view */}
           {activeNav === 'images' && !selectedImage && (
             <>
-              {tweaks.showCmdEcho && (
-                <ViewHeader command="docker images" count={images.length} total={liveImages.length}
-                  extra={<TopBtn onClick={() => openDialog('prune')}>prune</TopBtn>}
-                />
-              )}
+              <ViewHeader title="Images" count={images.length} total={liveImages.length}
+                extra={<TopBtn onClick={() => openDialog('prune')}>prune</TopBtn>}
+              />
               <ImagesView images={images} />
             </>
           )}
@@ -204,10 +214,7 @@ export function App() {
           {/* STACKS — list view */}
           {activeNav === 'stacks' && !selectedStackGraph && !selectedStackLogs && (
             <>
-              {tweaks.showCmdEcho && (
-                <ViewHeader command="docker compose ls" count={stacks.length} total={liveStacks.length}
-                />
-              )}
+              <ViewHeader title="Stacks" count={stacks.length} total={liveStacks.length} />
               <StacksView stacks={stacks} containers={allContainers} />
             </>
           )}
@@ -223,11 +230,9 @@ export function App() {
           {/* NETWORKS */}
           {activeNav === 'networks' && (
             <>
-              {tweaks.showCmdEcho && (
-                <ViewHeader command="docker network ls" count={networks.length} total={liveNetworks.length}
-                  extra={<TopBtn onClick={() => openDialog('inspector')}>⇄ probe reach</TopBtn>}
-                />
-              )}
+              <ViewHeader title="Networks" count={networks.length} total={liveNetworks.length}
+                extra={<TopBtn onClick={() => openDialog('inspector')}>probe reach</TopBtn>}
+              />
               <NetworksView networks={networks} />
             </>
           )}
@@ -235,11 +240,9 @@ export function App() {
           {/* VOLUMES */}
           {activeNav === 'volumes' && (
             <>
-              {tweaks.showCmdEcho && (
-                <ViewHeader command="docker volume ls" count={volumes.length} total={liveVolumes.length}
-                  extra={<TopBtn onClick={() => openDialog('prune')}>prune orphans</TopBtn>}
-                />
-              )}
+              <ViewHeader title="Volumes" count={volumes.length} total={liveVolumes.length}
+                extra={<TopBtn onClick={() => openDialog('prune')}>prune orphans</TopBtn>}
+              />
               <VolumesView volumes={volumes} />
             </>
           )}
@@ -247,6 +250,8 @@ export function App() {
 
         </main>
       </div>
+
+      <HintBar />
 
       {/* Dialogs */}
       {dialogs.palette   && <CommandPalette   onClose={() => closeDialog('palette')}   />}

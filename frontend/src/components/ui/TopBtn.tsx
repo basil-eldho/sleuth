@@ -9,7 +9,7 @@ export function TopBtn({ children, onClick, active }: TopBtnProps) {
     <button
       onClick={onClick}
       className={[
-        'px-2.5 py-0.5 rounded-sm text-xs tracking-ui cursor-pointer font-mono border transition-colors',
+        'px-2.5 py-0.5 rounded-sm text-xs tracking-ui cursor-pointer font-sans border transition-colors',
         active
           ? 'bg-active border-fg6 text-fg'
           : 'bg-input border-border3 text-fg3 hover:bg-active hover:border-fg6 hover:text-fg',
@@ -34,7 +34,7 @@ export function DetailBtn({ children, onClick, primary, danger, disabled }: Deta
       <button
         onClick={onClick}
         disabled={disabled}
-        className="px-2.5 py-0.5 rounded-sm text-xs cursor-pointer font-mono border bg-green-dim hover:bg-green-dim-hov border-green-border text-green transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        className="px-2.5 py-0.5 rounded-sm text-xs cursor-pointer font-sans border bg-accent-dim hover:bg-accent-dim-hov border-accent-border text-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {children}
       </button>
@@ -45,7 +45,7 @@ export function DetailBtn({ children, onClick, primary, danger, disabled }: Deta
       onClick={onClick}
       disabled={disabled}
       className={[
-        'px-2.5 py-0.5 rounded-sm text-xs cursor-pointer font-mono border bg-input border-border3 text-fg3 transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
+        'px-2.5 py-0.5 rounded-sm text-xs cursor-pointer font-sans border bg-input border-border3 text-fg3 transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
         danger ? 'hover:border-danger-border hover:text-red' : 'hover:border-fg6 hover:text-fg',
       ].join(' ')}
     >

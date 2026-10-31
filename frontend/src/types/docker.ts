@@ -20,6 +20,21 @@ export interface Container {
   stack: string | null;  // docker compose project name, or null
   exitInfo?: ExitInfo;   // populated by backend when status === 'exited'
   mounts?: BindMount[];  // populated by backend on full inspect
+  // Runtime config — populated by the inspect endpoint only.
+  restartPolicy?: string;
+  network?: string;
+  dns?: string;
+  cpuCap?: number;       // cores; 0 = unlimited
+  pidsLimit?: number;    // 0 = unlimited
+  oomKill?: boolean;
+  health?: string;
+}
+
+// Result of a real container-to-target reachability probe.
+export interface ProbeResult {
+  ok: boolean;
+  latencyMs: number;
+  lines: string[];
 }
 
 export interface StackNode {
@@ -98,4 +113,21 @@ export interface LiveStats {
   cpu: number;
   mem: number;
   status: ContainerStatus;
+  netRx: number;    // cumulative bytes received
+  netTx: number;    // cumulative bytes transmitted
+  blkRead: number;  // cumulative bytes read from block devices
+  blkWrite: number; // cumulative bytes written to block devices
+}
+
+// One accumulated sample of real stats, kept client-side so the Stats tab can
+// draw actual history (CPU/mem instantaneous; net/block are cumulative counters
+// the Stats tab differences into rates).
+export interface StatSample {
+  t: number;        // Date.now() when sampled
+  cpu: number;
+  mem: number;
+  netRx: number;
+  netTx: number;
+  blkRead: number;
+  blkWrite: number;
 }

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { X } from 'lucide-react';
 
 export type ModalSize = 'sm' | 'md' | 'lg';
 
@@ -43,17 +44,31 @@ export function Modal({ onClose, size = 'md', align = 'center', children }: Moda
 }
 
 interface ModalHeaderProps {
-  command: string;
+  title: string;
+  icon?: React.ReactNode;
+  onClose?: () => void;
   right?: React.ReactNode;
 }
 
-export function ModalHeader({ command, right }: ModalHeaderProps) {
+export function ModalHeader({ title, icon, onClose, right }: ModalHeaderProps) {
   return (
-    <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-border1 bg-panel shrink-0">
-      <span className="text-sm text-fg3">
-        <span className="text-green">$</span> {command}
+    <div className="flex items-center justify-between px-4 py-3 border-b border-border1 bg-panel shrink-0 font-sans">
+      <span className="flex items-center gap-2 text-sm font-semibold text-fg">
+        {icon}
+        {title}
       </span>
-      {right ?? <span className="text-2xs text-fg5 tracking-wider">esc</span>}
+      {right ??
+        (onClose ? (
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="flex text-fg5 hover:text-fg transition-colors cursor-pointer"
+          >
+            <X size={15} />
+          </button>
+        ) : (
+          <span className="text-2xs text-fg5 tracking-status">esc</span>
+        ))}
     </div>
   );
 }

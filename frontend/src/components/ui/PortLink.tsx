@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ExternalLink } from 'lucide-react';
 
 interface PortChipProps {
   raw: string;
@@ -34,9 +35,9 @@ function PortChip({ raw }: PortChipProps) {
       {hov && (
         <span
           onClick={open}
-          className="text-green text-2xs cursor-pointer bg-green/10 px-1 rounded-sm tracking-port"
+          className="inline-flex items-center gap-0.5 text-green text-2xs cursor-pointer bg-green/10 px-1 rounded-sm tracking-port"
         >
-          ↗ open
+          <ExternalLink size={10} /> open
         </span>
       )}
     </span>

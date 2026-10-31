@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Image, LiveStats } from '../types/docker';
+import type { Image, LiveStats, StatSample } from '../types/docker';
+
+const HISTORY_LEN = 90; // ~3 min at the 2s collector interval
 
 export type NavSection = 'containers' | 'images' | 'stacks' | 'networks' | 'volumes';
 export type DialogName = 'palette' | 'inspector' | 'prune' | 'help';
@@ -29,6 +31,7 @@ const DIALOG_DEFAULTS: Record<DialogName, boolean> = {
 interface AppStore {
   // Live stats from WS /ws/stats
   liveStats: Record<string, LiveStats>;
+  statsHistory: Record<string, StatSample[]>;
   applyStats: (stats: LiveStats) => void;
   initLiveStats: () => void;
 
@@ -69,6 +72,7 @@ export const useAppStore = create<AppStore>()(
     (set) => ({
       // Live stats
       liveStats: {},
+      statsHistory: {},
       applyStats: (stats) =>
         set((s) => ({ liveStats: { ...s.liveStats, [stats.id]: stats } })),
       initLiveStats: () => {
@@ -76,10 +80,19 @@ export const useAppStore = create<AppStore>()(
         const ws = new WebSocket(`${proto}//${window.location.host}/ws/stats`);
         ws.onmessage = (e) => {
           const batch: LiveStats[] = JSON.parse(e.data as string);
+          const t = Date.now();
           set((s) => {
             const next = { ...s.liveStats };
-            for (const stat of batch) next[stat.id] = stat;
-            return { liveStats: next };
+            const hist = { ...s.statsHistory };
+            for (const stat of batch) {
+              next[stat.id] = stat;
+              const prev = hist[stat.id] ?? [];
+              hist[stat.id] = [
+                ...prev,
+                { t, cpu: stat.cpu, mem: stat.mem, netRx: stat.netRx, netTx: stat.netTx, blkRead: stat.blkRead, blkWrite: stat.blkWrite },
+              ].slice(-HISTORY_LEN);
+            }
+            return { liveStats: next, statsHistory: hist };
           });
         };
       },

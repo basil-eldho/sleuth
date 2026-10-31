@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { RotateCw, Play } from 'lucide-react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
@@ -152,13 +153,13 @@ export function ExecTab({ container: c }: ExecTabProps) {
           <button
             onClick={connect}
             className={[
-              'px-2.5 py-0.5 rounded-sm text-xs font-mono border transition-colors',
+              'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm text-xs font-mono border transition-colors',
               connected
                 ? 'bg-transparent border-border3 text-fg4 hover:border-fg6 hover:text-fg'
                 : 'bg-green-dim border-green-border text-green hover:bg-green-dim-hov',
             ].join(' ')}
           >
-            {connected ? '↺ reconnect' : '▶ connect'}
+            {connected ? <><RotateCw size={12} /> reconnect</> : <><Play size={12} /> connect</>}
           </button>
         )}
 

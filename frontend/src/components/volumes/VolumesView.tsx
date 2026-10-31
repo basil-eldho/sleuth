@@ -1,4 +1,6 @@
+import { FolderOpen, Trash2 } from 'lucide-react';
 import { ActionIcon } from '../ui/TopBtn';
+import { Dot } from '../ui/Dot';
 import type { Volume } from '../../types/docker';
 
 const TH = 'px-3 py-2 text-left text-2xs tracking-widest text-fg5 font-medium bg-bg sticky top-0 z-[1] border-b border-border2 whitespace-nowrap' as const;
@@ -34,13 +36,13 @@ export function VolumesView({ volumes }: VolumesViewProps) {
               </td>
               <td className="py-cell px-3">
                 {v.inUse
-                  ? <span className="text-xs text-green">● yes</span>
-                  : <span className="text-xs text-amber">○ orphan</span>}
+                  ? <span className="inline-flex items-center gap-1.5 text-xs text-green"><Dot color="green" /> yes</span>
+                  : <span className="inline-flex items-center gap-1.5 text-xs text-amber"><Dot color="amber" /> orphan</span>}
               </td>
               <td className="py-cell px-3">
                 <div className="flex justify-end">
-                  <ActionIcon title="Browse">▤</ActionIcon>
-                  <ActionIcon title="Remove" danger>✕</ActionIcon>
+                  <ActionIcon title="Browse"><FolderOpen size={13} /></ActionIcon>
+                  <ActionIcon title="Remove" danger><Trash2 size={13} /></ActionIcon>
                 </div>
               </td>
             </tr>

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 
@@ -12,6 +13,14 @@ import (
 	"sleuth/internal/stats"
 	"sleuth/internal/ws"
 )
+
+// addr is the listen address, overridable with PORT (defaults to :8080).
+func addr() string {
+	if p := os.Getenv("PORT"); p != "" {
+		return ":" + p
+	}
+	return ":8080"
+}
 
 func main() {
 	dockerClient, err := docker.New()
@@ -30,7 +39,7 @@ func main() {
 
 	router := api.NewRouter(dockerClient, collector, hub)
 
-	srv := &http.Server{Addr: ":8080", Handler: router}
+	srv := &http.Server{Addr: addr(), Handler: router}
 
 	go func() {
 		<-ctx.Done()
@@ -38,7 +47,7 @@ func main() {
 		srv.Shutdown(context.Background())
 	}()
 
-	log.Println("sleuth: listening on :8080")
+	log.Printf("sleuth: listening on %s", srv.Addr)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("sleuth: %v", err)
 	}

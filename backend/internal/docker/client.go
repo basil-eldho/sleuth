@@ -176,12 +176,52 @@ func (c *Client) ResizePTY(ctx context.Context, execID string, rows, cols uint) 
 }
 
 func (c *Client) StreamLogs(ctx context.Context, id string) (io.ReadCloser, error) {
-	return c.cli.ContainerLogs(ctx, id, container.LogsOptions{
+	// A TTY container emits a raw byte stream; a non-TTY container multiplexes
+	// stdout/stderr with an 8-byte frame header per message, which must be
+	// demultiplexed before it can be sent as UTF-8 text over the websocket.
+	insp, err := c.cli.ContainerInspect(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	tty := insp.Config != nil && insp.Config.Tty
+
+	rc, err := c.cli.ContainerLogs(ctx, id, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     true,
 		Timestamps: true,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	if tty {
+		return rc, nil
+	}
+
+	// Demultiplex in a goroutine, exposing the clean text via a pipe.
+	pr, pw := io.Pipe()
+	go func() {
+		_, err := stdcopy.StdCopy(pw, pw, rc)
+		rc.Close()
+		pw.CloseWithError(err)
+	}()
+
+	return &pipeStream{pr: pr, src: rc}, nil
+}
+
+// pipeStream couples the demultiplexed pipe reader with the underlying Docker
+// stream so that closing it tears down both.
+type pipeStream struct {
+	pr  *io.PipeReader
+	src io.Closer
+}
+
+func (p *pipeStream) Read(b []byte) (int, error) { return p.pr.Read(b) }
+
+func (p *pipeStream) Close() error {
+	p.src.Close()
+	return p.pr.Close()
 }
 
 // ---- stats (used by collector) ----------------------------------------------
@@ -237,13 +277,41 @@ func (c *Client) singleStats(ctx context.Context, id, state, health string) (Liv
 
 	cpu := cpuPercent(s)
 	mem := memUsedMB(s.MemoryStats)
+	netRx, netTx := netTotals(s.Networks)
+	blkRead, blkWrite := blkioTotals(s.BlkioStats)
 
 	return LiveStats{
-		ID:     id,
-		CPU:    roundOne(cpu),
-		Mem:    roundOne(mem),
-		Status: containerStatus(state, health),
+		ID:       id,
+		CPU:      roundOne(cpu),
+		Mem:      roundOne(mem),
+		Status:   containerStatus(state, health),
+		NetRx:    netRx,
+		NetTx:    netTx,
+		BlkRead:  blkRead,
+		BlkWrite: blkWrite,
 	}, nil
+}
+
+// netTotals sums received/transmitted bytes across every network interface.
+func netTotals(nets map[string]types.NetworkStats) (rx, tx int64) {
+	for _, n := range nets {
+		rx += int64(n.RxBytes)
+		tx += int64(n.TxBytes)
+	}
+	return rx, tx
+}
+
+// blkioTotals sums read/write bytes across every block device.
+func blkioTotals(bs types.BlkioStats) (read, write int64) {
+	for _, e := range bs.IoServiceBytesRecursive {
+		switch strings.ToLower(e.Op) {
+		case "read":
+			read += int64(e.Value)
+		case "write":
+			write += int64(e.Value)
+		}
+	}
+	return read, write
 }
 
 // ---- images -----------------------------------------------------------------
@@ -676,6 +744,35 @@ func containerFromInspect(r types.ContainerJSON, ls LiveStats, tail []string) Co
 		}
 	}
 
+	// Runtime config from HostConfig / NetworkSettings.
+	restartPolicy := ""
+	var pidsLimit int64
+	oomKill := true
+	cpuCap := 0.0
+	dns := "—"
+	if r.HostConfig != nil {
+		restartPolicy = string(r.HostConfig.RestartPolicy.Name)
+		if r.HostConfig.PidsLimit != nil {
+			pidsLimit = *r.HostConfig.PidsLimit
+		}
+		if r.HostConfig.OomKillDisable != nil && *r.HostConfig.OomKillDisable {
+			oomKill = false
+		}
+		if r.HostConfig.NanoCPUs > 0 {
+			cpuCap = float64(r.HostConfig.NanoCPUs) / 1e9
+		}
+		if len(r.HostConfig.DNS) > 0 {
+			dns = strings.Join(r.HostConfig.DNS, ", ")
+		}
+	}
+	netName := ""
+	if r.NetworkSettings != nil {
+		for n := range r.NetworkSettings.Networks {
+			netName = n
+			break
+		}
+	}
+
 	return ContainerDTO{
 		ID:       r.ID,
 		Name:     name,
@@ -693,7 +790,52 @@ func containerFromInspect(r types.ContainerJSON, ls LiveStats, tail []string) Co
 		Stack:    nullableString(r.Config.Labels["com.docker.compose.project"]),
 		Mounts:   mounts,
 		ExitInfo: exitInfo,
+
+		RestartPolicy: restartPolicy,
+		Network:       netName,
+		Dns:           dns,
+		CpuCap:        cpuCap,
+		PidsLimit:     pidsLimit,
+		OomKill:       oomKill,
+		Health:        health,
 	}
+}
+
+// ProbeReach runs a real TCP reachability check from the source container to
+// ip:port (tries nc, then bash /dev/tcp) and reports the measured round-trip.
+func (c *Client) ProbeReach(ctx context.Context, fromID, ip string, port int) (ProbeResultDTO, error) {
+	// Try, in order: nc -z (openbsd/newer busybox), plain nc connect (older
+	// busybox), then bash /dev/tcp. Whichever connects wins; images vary.
+	script := fmt.Sprintf(
+		`nc -z -w 3 %[1]s %[2]d >/dev/null 2>&1 && echo REACH_OK && exit 0; `+
+			`nc -w 3 %[1]s %[2]d </dev/null >/dev/null 2>&1 && echo REACH_OK && exit 0; `+
+			`(timeout 3 sh -c 'exec 3<>/dev/tcp/%[1]s/%[2]d') >/dev/null 2>&1 && echo REACH_OK && exit 0; `+
+			`echo REACH_FAIL`,
+		ip, port,
+	)
+	start := time.Now()
+	stdout, stderr, err := c.ExecCommand(ctx, fromID, "/bin/sh", script)
+	ms := int(time.Since(start).Milliseconds())
+	out := strings.TrimSpace(stdout + stderr)
+
+	if err != nil {
+		return ProbeResultDTO{
+			OK:    false,
+			Lines: []string{"probe exec failed: " + err.Error(), "(source container may lack a shell or probe tools)"},
+		}, nil
+	}
+
+	ok := strings.Contains(out, "REACH_OK")
+	lines := []string{fmt.Sprintf("probe %s:%d from source container", ip, port)}
+	if ok {
+		lines = append(lines, "connection succeeded", fmt.Sprintf("round-trip (incl. exec): %d ms", ms))
+	} else {
+		lines = append(lines, "connection refused / unreachable")
+		if out != "" && out != "REACH_FAIL" {
+			lines = append(lines, out)
+		}
+	}
+	return ProbeResultDTO{OK: ok, LatencyMs: ms, Lines: lines}, nil
 }
 
 func exitSignal(code int) string {

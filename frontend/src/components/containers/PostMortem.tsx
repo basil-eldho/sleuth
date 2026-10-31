@@ -1,3 +1,4 @@
+import { CircleX, AlertTriangle } from 'lucide-react';
 import { DetailBtn } from '../ui/TopBtn';
 import type { ExitInfo } from '../../types/docker';
 
@@ -10,12 +11,14 @@ export function PostMortem({ info, onViewLogs }: PostMortemProps) {
   return (
     <div className="bg-red/10 border-b border-fg6 border-l-2 border-l-red px-4 py-2.5 shrink-0">
       <div className="flex items-center gap-2.5 mb-1.5">
-        <span className="text-red text-sm">
-          ✕ exited · code {info.code}
+        <span className="inline-flex items-center gap-1.5 text-red text-sm">
+          <CircleX size={13} /> exited · code {info.code}
           {info.signal ? ` (${info.signal})` : ''} · {info.at}
         </span>
         {info.killedBy === 'oom' && (
-          <span className="text-2xs text-amber tracking-status">⚠ OOM-KILLED</span>
+          <span className="inline-flex items-center gap-1 text-2xs text-amber tracking-status">
+            <AlertTriangle size={11} /> OOM-KILLED
+          </span>
         )}
         <span className="flex-1" />
         <DetailBtn onClick={onViewLogs}>view full logs</DetailBtn>

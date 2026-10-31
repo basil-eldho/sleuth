@@ -1,4 +1,4 @@
-import type { Container, Image, Network, Volume, Stack, DiskUsage } from '../types/docker';
+import type { Container, Image, Network, Volume, Stack, DiskUsage, ProbeResult } from '../types/docker';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, options);
@@ -25,6 +25,12 @@ export const api = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cmd, shell }),
+      }),
+    probe:   (id: string, ip: string, port: number) =>
+      request<ProbeResult>(`/containers/${id}/probe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ip, port }),
       }),
   },
   images:   { list: () => request<Image[]>('/images') },

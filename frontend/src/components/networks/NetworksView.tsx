@@ -1,3 +1,4 @@
+import { Share2, Trash2 } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { ActionIcon } from '../ui/TopBtn';
 import { CopyText } from '../ui/CopyText';
@@ -49,8 +50,8 @@ export function NetworksView({ networks }: NetworksViewProps) {
               </td>
               <td className="py-cell px-3">
                 <div className="flex justify-end">
-                  <ActionIcon title="Inspect" onClick={() => openDialog('inspector')}>⇄</ActionIcon>
-                  <ActionIcon title="Remove" danger>✕</ActionIcon>
+                  <ActionIcon title="Inspect" onClick={() => openDialog('inspector')}><Share2 size={13} /></ActionIcon>
+                  <ActionIcon title="Remove" danger><Trash2 size={13} /></ActionIcon>
                 </div>
               </td>
             </tr>
