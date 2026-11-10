@@ -120,9 +120,10 @@ function parseLine(line: string): ParsedLine {
 
 interface LogsTabProps {
   lines: string[];
+  onClear: () => void;
 }
 
-export function LogsTab({ lines }: LogsTabProps) {
+export function LogsTab({ lines, onClear }: LogsTabProps) {
   const [follow, setFollow] = useState(true);
   const [filter, setFilter] = useState('');
   const [levels, setLevels] = useState<Set<string>>(new Set(ALL_LEVELS));
@@ -204,6 +205,13 @@ export function LogsTab({ lines }: LogsTabProps) {
           <span className="text-fg2">{visible.length}</span>
           <span className="text-fg4"> / {lines.length}</span> lines
         </span>
+        <button
+          onClick={onClear}
+          disabled={empty}
+          className="inline-flex items-center rounded-sm px-2 py-1 text-2xs cursor-pointer tracking-widest border border-border3 bg-transparent text-fg3 hover:text-fg2 transition-colors disabled:opacity-40 disabled:cursor-default disabled:hover:text-fg3"
+        >
+          clear
+        </button>
         <button
           onClick={() => setFollow((f) => !f)}
           aria-pressed={follow}

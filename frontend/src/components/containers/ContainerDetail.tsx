@@ -66,7 +66,7 @@ export function ContainerDetail({ container: c, onClose }: ContainerDetailProps)
   const { data: freshContainer } = useContainer(c.id);
   const container = freshContainer ?? c;
 
-  const logLines = useLogs(c.id);
+  const { lines: logLines, clear: clearLogs } = useLogs(c.id);
   const actions = useContainerActions(container.id);
 
   return (
@@ -148,7 +148,7 @@ export function ContainerDetail({ container: c, onClose }: ContainerDetailProps)
       {/* Tab body */}
       <div className="flex-1 overflow-hidden flex flex-col">
         {tab === 'overview' && <OverviewTab container={container} />}
-        {tab === 'logs'     && <LogsTab lines={logLines} />}
+        {tab === 'logs'     && <LogsTab lines={logLines} onClear={clearLogs} />}
         {tab === 'stats'    && <StatsTab container={container} />}
         {tab === 'mounts'   && <MountsTab container={container} />}
         {tab === 'exec'     && <ExecTab container={container} />}
