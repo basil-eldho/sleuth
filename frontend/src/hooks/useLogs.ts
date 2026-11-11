@@ -1,6 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-export function useLogs(containerId: string): string[] {
+interface UseLogsResult {
+  lines: string[];
+  clear: () => void;
+}
+
+export function useLogs(containerId: string): UseLogsResult {
   const [lines, setLines] = useState<string[]>([]);
 
   useEffect(() => {
@@ -15,5 +20,7 @@ export function useLogs(containerId: string): string[] {
     return () => ws.close();
   }, [containerId]);
 
-  return lines;
+  const clear = useCallback(() => setLines([]), []);
+
+  return { lines, clear };
 }

@@ -27,7 +27,7 @@ interface ServiceLogStreamProps {
 }
 
 function ServiceLogStream({ container, color, onUpdate }: ServiceLogStreamProps) {
-  const lines = useLogs(container.id);
+  const { lines } = useLogs(container.id);
   const onUpdateRef = useRef(onUpdate);
   onUpdateRef.current = onUpdate;
 
